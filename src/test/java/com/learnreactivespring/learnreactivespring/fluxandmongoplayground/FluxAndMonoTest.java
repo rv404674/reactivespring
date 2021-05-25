@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 public class FluxAndMonoTest {
@@ -69,7 +70,7 @@ public class FluxAndMonoTest {
 
         StepVerifier.create(stringFlux)
                 .expectNext("Spring", "Spring Boot", "Reactive Spring")
-                .expectErrorMessage("Exception Occured")
+                .expectErrorMessage("Exception Occurred")
                 //.expectError(RuntimeException.class)
                 .verify();
                 //verifyComplete();
@@ -93,7 +94,27 @@ public class FluxAndMonoTest {
 
         StepVerifier.create(stringFlux)
                 .expectNextCount(3)
-                .expectErrorMessage("Exception Occurrred")
+                .expectErrorMessage("Exception Occurred")
+                .verify();
+    }
+
+    /**
+     * Mono Test
+     */
+    @Test
+    public void monoTest(){
+        Mono<String> stringMono = Mono.just("Rahul");
+
+        // we are first expecting "Rahul" and then an on complete event.
+        StepVerifier.create(stringMono.log())
+                .expectNext("Rahul")
+                .verifyComplete();
+    }
+
+    @Test
+    public void monoTest_Error(){
+        StepVerifier.create(Mono.error(new RuntimeException("Exception Occurred")).log())
+                .expectError(RuntimeException.class)
                 .verify();
     }
 }
