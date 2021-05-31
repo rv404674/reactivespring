@@ -48,4 +48,14 @@ public class FluxAndMonoFactoryTest {
                 .verifyComplete();
     }
 
+    @Test
+    public void fluxUsingRange(){
+        // Range is for giving elements from (i,j), it only makes sense with flux as it has > 1 elements
+        Flux<Integer> integerFlux = Flux.range(1, 2);
+        StepVerifier.create(integerFlux.log())
+                .expectNext(1,2)
+                .verifyComplete();
+    }
+
+
 }
