@@ -13,6 +13,11 @@ public class FluxAndMonoTest {
 
     @Test
     public void fluxTest(){
+        // Basic Flux
+        Flux.just("Spring", "Spring Boot")
+                .map(s -> s.concat("flux"))
+                .subscribe(System.out::println);
+
         // with concatWith we are attaching an error to the flux.
         // Basically we are throwing Runtime Exception and using concatwith, we are attaching it to the flux.
         // log will print what is happening behind the scenes.
