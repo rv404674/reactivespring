@@ -52,4 +52,45 @@ public class FluxAndMonoCombineTest {
         // output might be
         // (A,D,B,E,C,F) or (D,A,E,B,C,F) or any random order.
     }
+
+    @Test
+    public void combineUsingConcat_withDelay(){
+        /**
+         * NOTE: Order is guaranteed. just like string append. "rahul" + "verma" = "rahulverma"
+         * concat will wait for flux1 to finish then it will consume flux2.
+         * Cons - Slower than Merge.
+         */
+        Flux<String> flux1 = Flux.just("A", "B", "C").delayElements(Duration.ofSeconds(1));
+        Flux<String> flux2 = Flux.just("D", "E", "F").delayElements(Duration.ofSeconds(1));
+
+        Flux<String> mergeFlux = Flux.concat(flux1, flux2);
+        StepVerifier.create(mergeFlux.log())
+                .expectSubscription()
+                .expectNext("A", "B", "C", "D", "E", "F")
+                .verifyComplete();
+        // A,B,C,D,E,F
+    }
+
+    @Test
+    public void combineUsingZip_withDelay(){
+        /**
+         * NOTE: Diff type of merging.
+         * Will take one one element of each of the fluxes and then merge it.
+         */
+        Flux<String> flux1 = Flux.just("A", "B", "C").delayElements(Duration.ofSeconds(1));
+        Flux<String> flux2 = Flux.just("D", "E", "F").delayElements(Duration.ofSeconds(1));
+
+        Flux<String> mergeFlux = Flux.zip(flux1, flux2, (t1,t2) -> {
+            return t1.concat(t2);
+        });
+
+        StepVerifier.create(mergeFlux.log())
+                .expectSubscription()
+                .expectNext("AD", "BE", "CF")
+                .verifyComplete();
+
+        // AD, BE, CF
+    }
+
+
 }
