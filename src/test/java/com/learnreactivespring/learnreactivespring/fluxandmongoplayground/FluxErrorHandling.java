@@ -1,8 +1,12 @@
 package com.learnreactivespring.learnreactivespring.fluxandmongoplayground;
 
 import org.junit.jupiter.api.Test;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 public class FluxErrorHandling {
 
@@ -62,6 +66,51 @@ public class FluxErrorHandling {
 
         // A,B,C, default
     }
+
+    @Test
+    public void fluxErrorHandling_onErrorMap_Retry() {
+        // NOTE: retry will make this block retry again for 2 times.
+        // If you are making some db calls, using this will be useful.
+        // o/p A,B,C,A,B,C
+        Flux<String> stringFlux = Flux.just("A", "B", "C")
+                .concatWith(Flux.error(new RuntimeException()))
+                .concatWith(Flux.just("D"))
+                .onErrorMap( (e) -> new CustomException(e))
+                .retry(2);
+
+        StepVerifier.create(stringFlux.log())
+                .expectSubscription()
+                .expectNext("A", "B", "C")
+                .expectNext("A", "B", "C")
+                .expectNext("A", "B", "C")
+                .expectError(CustomException.class)
+                .verify();
+    }
+
+    @Test
+    public void fluxErrorHandling_onErrorMap_RetryWithBackoff() {
+        // NOTE: In actuall prod env, we usually retry after some backoff.
+        // try two times, after 5 second each.g
+        Retry retrySpec = Retry.fixedDelay(2, Duration.ofSeconds(5))
+                .filter((ex) -> ex instanceof CustomException)
+                .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> Exceptions.propagate(retrySignal.failure())));
+
+
+        Flux<String> stringFlux = Flux.just("A", "B", "C")
+                .concatWith(Flux.error(new RuntimeException()))
+                .concatWith(Flux.just("D"))
+                .onErrorMap( (e) -> new CustomException(e))
+                .retryWhen(retrySpec);
+
+        StepVerifier.create(stringFlux.log())
+                .expectSubscription()
+                .expectNext("A", "B", "C")
+                .expectNext("A", "B", "C")
+                .expectNext("A", "B", "C")
+                .expectError(CustomException.class)
+                .verify();
+    }
+
 
 
 }
