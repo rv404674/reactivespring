@@ -3,6 +3,7 @@ package com.learnreactivespring.learnreactivespring.fluxandmongoplayground;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import reactor.test.scheduler.VirtualTimeScheduler;
 
 import java.time.Duration;
 
@@ -63,12 +64,29 @@ public class FluxAndMonoCombineTest {
         Flux<String> flux1 = Flux.just("A", "B", "C").delayElements(Duration.ofSeconds(1));
         Flux<String> flux2 = Flux.just("D", "E", "F").delayElements(Duration.ofSeconds(1));
 
+        // NOTE: Took 6sec.
         Flux<String> mergeFlux = Flux.concat(flux1, flux2);
         StepVerifier.create(mergeFlux.log())
                 .expectSubscription()
                 .expectNext("A", "B", "C", "D", "E", "F")
                 .verifyComplete();
         // A,B,C,D,E,F
+    }
+
+    @Test
+    public void combineUsingConcat_withDelay_withVirtualTime(){
+        VirtualTimeScheduler.getOrSet();
+
+        Flux<String> flux1 = Flux.just("A", "B", "C").delayElements(Duration.ofSeconds(1));
+        Flux<String> flux2 = Flux.just("D", "E", "F").delayElements(Duration.ofSeconds(1));
+
+        Flux<String> mergeFlux = Flux.concat(flux1, flux2);
+        // NOTE: took 0.158s.
+        StepVerifier.withVirtualTime(() -> mergeFlux.log())
+                .expectSubscription()
+                .thenAwait(Duration.ofSeconds(6))
+                .expectNext("A", "B", "C", "D", "E", "F")
+                .verifyComplete();
     }
 
     @Test
