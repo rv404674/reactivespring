@@ -18,7 +18,7 @@ public class FluxAndMonoController {
         // as browser is a blocking client, it can't differiante between flux and json response
         // it simply keeps on reloading till 4*4 = 16s, as it expects a json.
         return Flux.just(1, 2, 3, 4)
-                .delayElements(Duration.ofSeconds(4))
+                .delayElements(Duration.ofSeconds(1))
                 .log();
     }
 
@@ -27,7 +27,7 @@ public class FluxAndMonoController {
         // NOTE:
         // now we will see the flux changes as we are telling the browser to expect a stream.
         return Flux.just(1, 2, 3, 4)
-                .delayElements(Duration.ofSeconds(5))
+                .delayElements(Duration.ofSeconds(2))
                 .log();
     }
 
