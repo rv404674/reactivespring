@@ -27,7 +27,7 @@ public class FluxAndMonoController {
         // NOTE:
         // now we will see the flux changes as we are telling the browser to expect a stream.
         return Flux.just(1, 2, 3, 4)
-                .delayElements(Duration.ofSeconds(2))
+                .delayElements(Duration.ofSeconds(1))
                 .log();
     }
 

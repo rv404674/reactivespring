@@ -9,9 +9,15 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @WebFluxTest
@@ -27,7 +33,7 @@ public class FluxAndMonoControllerTest {
     WebTestClient webTestClient;
 
     @Test
-    public void fluxApproach1(){
+    public void fluxApproach1() {
         logger.info("** In Flux_approach1 Test **");
         Flux<Integer> integerFlux = webTestClient.get().uri("/flux")
                 .accept(MediaType.APPLICATION_JSON)
@@ -38,7 +44,7 @@ public class FluxAndMonoControllerTest {
 
         StepVerifier.create(integerFlux)
                 .expectSubscription()
-                .expectNext(1,2,3,4)
+                .expectNext(1, 2, 3, 4)
                 .verifyComplete();
 
     }
@@ -53,6 +59,41 @@ public class FluxAndMonoControllerTest {
                 .expectStatus().isOk()
                 .expectBodyList(Integer.class)
                 .hasSize(4);
+    }
+
+    @Test
+    public void fluxApproach3() {
+        // NOTE: Test without step verifier
+
+        List<Integer> expectedOutput = Arrays.asList(1, 2, 3, 4);
+
+        EntityExchangeResult<List<Integer>> entityExchangeResult = webTestClient.get().uri("/flux")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Integer.class)
+                // NOTE: expectBodyList will wait till all the elements has been recieved and will then build a list
+                //  out of the flux.
+                .returnResult();
+
+        assertEquals(expectedOutput, entityExchangeResult.getResponseBody());
+
+    }
+
+    @Test
+    public void fluxApproach4() {
+        List<Integer> expectedOutput = Arrays.asList(1, 2, 3, 4);
+
+        webTestClient.get().uri("/flux")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Integer.class)
+                // NOTE: expectBodyList will wait till all the elements has been recieved and will then build a list
+                //  out of the flux.
+                .consumeWith((response) -> {
+                    assertEquals(expectedOutput, response.getResponseBody());
+                });
     }
 
 
