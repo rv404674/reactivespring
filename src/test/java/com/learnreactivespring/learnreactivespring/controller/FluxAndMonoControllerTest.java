@@ -97,4 +97,22 @@ public class FluxAndMonoControllerTest {
     }
 
 
+    // NOTE: Testing infinite stream here
+    @Test
+    public void fluxStreamApproach(){
+        Flux<Long> longFlux = webTestClient.get().uri("/fluxstream")
+                .accept(MediaType.APPLICATION_STREAM_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(Long.class)
+                .getResponseBody();
+
+        // For a infinite sequence, put thenCancel at the end as well.
+        StepVerifier.create(longFlux)
+                .expectNext(0L, 1L, 2L)
+                .thenCancel()
+                .verify();
+    }
+
+
 }
