@@ -18,9 +18,15 @@ public class FluxAndMonoController {
         // here browser is working as a subscriber. When we are hitting this url
         // as browser is a blocking client, it can't differiante between flux and json response
         // it simply keeps on reloading till 4*4 = 16s, as it expects a json.
+
+        // Returns the number of processors available to the JVM. - 12
+        // NOTE: the number of physical cores is this laptop is 6
+        // but due to hyper threading,  we have 12 virtual cores.
+        System.out.println("Number of Processors: " + Runtime.getRuntime().availableProcessors());
         return Flux.just(1, 2, 3, 4)
                 .delayElements(Duration.ofSeconds(1))
                 .log();
+
     }
 
     @GetMapping(value = "/fluxstream", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)

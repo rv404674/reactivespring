@@ -83,8 +83,8 @@ public class FluxAndMonoTransformTest {
          */
         Flux<String> stringFlux = Flux.fromIterable(Arrays.asList("A", "B", "C", "D", "E", "F")) // A, B, C, D, E, F
                 .flatMap(s -> {
-                            return Flux.fromIterable(convertToList(s)); // A -> List[A, newValue], B-> List[B, newValue]
-                        }) // convertToList is mimicking an external service/db that returns a flux
+                    return Flux.fromIterable(convertToList(s)); // A -> List[A, newValue], B-> List[B, newValue]
+                }) // convertToList is mimicking an external service/db that returns a flux
                 .log();
 
         // If you see we have 6 different list [A, newValue], [B, newValue] ...
