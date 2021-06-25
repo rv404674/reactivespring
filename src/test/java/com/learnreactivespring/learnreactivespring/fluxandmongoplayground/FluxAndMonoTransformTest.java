@@ -2,6 +2,7 @@ package com.learnreactivespring.learnreactivespring.fluxandmongoplayground;
 
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ public class FluxAndMonoTransformTest {
     List<String> names = new ArrayList<>(Arrays.asList("Rahul", "Sureshama", "Shubham Theja"));
 
     @Test
-    public void transformUsingMap(){
+    public void transformUsingMap() {
         /**
          * Map is used to perform transformation
          */
@@ -28,7 +29,7 @@ public class FluxAndMonoTransformTest {
     }
 
     @Test
-    public void transformUsingMap_Count(){
+    public void transformUsingMap_Count() {
         // NOTE:
         // here s.lenght will return a int. Hence it will be a Flux<Int> not other way
         Flux<Integer> stringFlux = Flux.fromIterable(names)
@@ -36,12 +37,12 @@ public class FluxAndMonoTransformTest {
                 .log();
 
         StepVerifier.create(stringFlux)
-                .expectNext(5, 9 , 13)
+                .expectNext(5, 9, 13)
                 .verifyComplete();
     }
 
     @Test
-    public void transformUsingMap_Repeat(){
+    public void transformUsingMap_Repeat() {
         // NOTE:
         // if you want the flux to repeat, use repeat
         Flux<Integer> stringFlux = Flux.fromIterable(names)
@@ -50,21 +51,64 @@ public class FluxAndMonoTransformTest {
                 .log();
 
         StepVerifier.create(stringFlux)
-                .expectNext(5, 9 , 13, 5, 9, 13)
+                .expectNext(5, 9, 13, 5, 9, 13)
                 .verifyComplete();
     }
 
     @Test
-    public void transformUsingMapAndFilter(){
+    public void transformUsingMapAndFilter() {
         // NOTE:
         // when you are performing multiple operations on a flux, it is called a pipeline.
         // also it is recommended to use filter before map. Because obviously filter will reduce
         // number of elements hence will reduce the overall complexity.
+
+        // TODO: map returns a transformed flux.
+        // it will be basically wrap everything with a mono/flux.
+        // so, if you were to return a Flux inside map, you will final get Flux<Flux<Int>>
         Flux<String> stringFlux = Flux.fromIterable(names)
-                .filter(s -> s.length()>6)
+                .filter(s -> s.length() > 6)
                 .map(s -> s.toLowerCase())
                 .repeat(1) // it means repeat one time
                 .log();
+
+        Mono<String> mono = Mono.just("Rahul")
+                .map(String::toLowerCase)
+                .log();
+
+        // NOTE: map adds a mono to whatever is returned inside.
+        // whereas flatmap merges all the publisher in a single mono.
+
+        // Map is when you want to return the object wrapped in Mono/Flux, and flatMap is used when you want to
+        // return it as object straightaway without wrapping it in Mono/Flux.
+        Mono<Mono<String>> mono3 = Mono.just("Rahul")
+                .map(s -> {
+                    String newString = s + "verma";
+                    Mono<String> x = Mono.just(newString);
+                    return x;
+                })
+                .log();
+
+
+        Mono<String> mono2 = Mono.just("Rahul")
+                .flatMap(s ->{
+                    String newString = s + "verma";
+                    Mono<String> x= Mono.just(newString);
+                    return x;
+                })
+                .log();
+
+
+
+        Flux<String> stringFlux2 = Flux.fromIterable(names)
+                .filter(s -> s.length() > 6)
+                .flatMap(s -> {
+                    Flux<String> x = Flux.fromIterable(Arrays.asList(s, "vale2"));
+                    return x;
+                })
+                .repeat(1) // it means repeat one time
+                .log();
+
+        stringFlux2.subscribe(System.out::println);
 
         StepVerifier.create(stringFlux)
                 .expectNext("sureshama", "shubham theja", "sureshama", "shubham theja") // because of the repeat
@@ -72,7 +116,7 @@ public class FluxAndMonoTransformTest {
     }
 
     @Test
-    public void transformUsingFlatMap(){
+    public void transformUsingFlatMap() {
         /**
          * NOTE: you use flatMap when you have to call a db/external service for every element.
          * basically for async things you use flatMap.
@@ -97,7 +141,7 @@ public class FluxAndMonoTransformTest {
     }
 
     @Test
-    public void transformUsingFlatMap_usingParallel(){
+    public void transformUsingFlatMap_usingParallel() {
         /**
          * Doing the above function parrallely - subscribeOn
          */
@@ -118,7 +162,7 @@ public class FluxAndMonoTransformTest {
     }
 
     @Test
-    public void transformUsingFlatMap_maintainingOrderParallel(){
+    public void transformUsingFlatMap_maintainingOrderParallel() {
         /**
          * Doing the above function thing inOrder - concatMap, but it still took 6 sec
          * use flatMapSequential - will run parrallely and give result in order (2s)
@@ -139,7 +183,7 @@ public class FluxAndMonoTransformTest {
 
     }
 
-    private List<String> convertToList(String s){
+    private List<String> convertToList(String s) {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
