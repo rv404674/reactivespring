@@ -1,15 +1,28 @@
 package com.learnreactivespring.learnreactivespring.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
 @RestController
 public class FluxAndMonoController {
+
+    private static final Logger logger = LoggerFactory.getLogger(FluxAndMonoController.class);
+
+    @GetMapping("/infloop")
+    public void returnInf(){
+        while(true){
+            int x=10;
+        }
+    }
 
     @GetMapping("/flux")
     public Flux<Integer> returnFlux(){
@@ -22,9 +35,21 @@ public class FluxAndMonoController {
         // Returns the number of processors available to the JVM. - 12
         // NOTE: the number of physical cores is this laptop is 6
         // but due to hyper threading,  we have 12 virtual cores.
+
+
+        Scheduler s= Schedulers.boundedElastic();
+
+        final Flux<String> flux = Flux
+                .range(1, 2)
+                .map(i -> 10 + i)
+                .publishOn(s)
+                .map(i -> "value " + i);
+
+        new Thread(() -> flux.subscribe(System.out::println));
+
         System.out.println("Number of Processors: " + Runtime.getRuntime().availableProcessors());
         return Flux.just(1, 2, 3, 4)
-                .delayElements(Duration.ofSeconds(1))
+                .delayElements(Duration.ofSeconds(2))
                 .log();
 
     }
