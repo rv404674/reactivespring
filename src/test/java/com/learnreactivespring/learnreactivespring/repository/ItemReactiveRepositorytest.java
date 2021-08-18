@@ -24,9 +24,11 @@ public class ItemReactiveRepositorytest {
     // id is null, as it is assigned once the document is inserted.
     List<Item> itemList = Arrays.asList(new Item(null, "LG TV", 50000.0),
             new Item(null, "Sony Earphones", 1500.0),
-            new Item(null, "gym pants", 500.0));
+            new Item(null, "gym pants", 500.0),
+            new Item("123", "gym shorts", 200.0));
 
     @Before
+    // NOTE: This is will be called at the beginning of each test method of this class.
     public void setUp(){
         itemReactiveRepository.deleteAll()
                 .thenMany(Flux.fromIterable(itemList))
@@ -44,7 +46,23 @@ public class ItemReactiveRepositorytest {
     public void getAllItems(){
         StepVerifier.create(itemReactiveRepository.findAll())
                 .expectSubscription()
-                .expectNextCount(3)
+                .expectNextCount(4)
+                .verifyComplete();
+    }
+
+    @Test
+    public void getById(){
+        StepVerifier.create(itemReactiveRepository.findById("123"))
+                .expectSubscription()
+                .expectNextMatches(item -> item.getDescription().equals("gym shorts"))
+                .verifyComplete();
+    }
+
+    @Test
+    public void getByDescription(){
+        StepVerifier.create(itemReactiveRepository.findByDescription("Sony Earphones").log("findItemByDescription:"))
+                .expectSubscription()
+                .expectNextCount(1)
                 .verifyComplete();
     }
 }
