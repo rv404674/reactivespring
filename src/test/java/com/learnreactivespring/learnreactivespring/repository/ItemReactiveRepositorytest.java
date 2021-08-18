@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -63,6 +64,34 @@ public class ItemReactiveRepositorytest {
         StepVerifier.create(itemReactiveRepository.findByDescription("Sony Earphones").log("findItemByDescription:"))
                 .expectSubscription()
                 .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    @Test
+    public void saveItem(){
+        Item item = new Item(null, "marker", 30.0);
+        Mono<Item> itemMono = itemReactiveRepository.save(item);
+        StepVerifier.create(itemMono.log("saveItem : "))
+                .expectSubscription()
+                .expectNextMatches(item1 -> (item1.getId() != null && item1.getDescription().equals("marker")))
+                .verifyComplete();
+    }
+
+    @Test
+    public void updatePrice(){
+        double newPrice = 2500.0;
+
+        Flux<Item> updatedItem = itemReactiveRepository.findByDescription("Sony Earphones")
+                // map is used for transformation only.
+                .map(item -> {
+                    item.setPrice(newPrice);
+                    return item;
+                })
+                .flatMap(item -> itemReactiveRepository.save(item));
+
+        StepVerifier.create(updatedItem)
+                .expectSubscription()
+                .expectNextMatches(item -> item.getDescription().equals("Sony Earphones"))
                 .verifyComplete();
     }
 }
