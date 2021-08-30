@@ -59,6 +59,15 @@ public class ItemControllerTest {
                 .hasSize(3);
     }
 
+    @Test
+    public void getOneItem(){
+        webTestClient.get().uri(ItemConstants.ITEM_END_POINT_V1.concat("/{id}"), "ABC")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.price", 1000.0);
+    }
+
 
 
 }
